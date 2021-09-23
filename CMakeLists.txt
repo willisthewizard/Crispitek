@@ -14,9 +14,13 @@ file(GLOB_RECURSE SOURCE_FILES
 file(GLOB_RECURSE HEADER_FILES
 	${PROJECT_SOURCE_DIR}/src/*.h
 	${PROJECT_SOURCE_DIR}/src/*.hpp)
-# Copy shaders
-file(GLOB SHADERS ${PROJECT_SOURCE_DIR}/resources/shaders/*.glsl)
-file(COPY ${SHADERS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/resources/shaders)
+# Copy resouces
+file(GLOB RESOURCES ${PROJECT_SOURCE_DIR}/resources/*)
+file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/resources)
+#STB
+include_directories(${PROJECT_SOURCE_DIR}/lib/stb)
+#GLW
+include_directories(${PROJECT_SOURCE_DIR}/lib/GLM)
 # GLFW
 # Don't build docs, tests, or examples
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
