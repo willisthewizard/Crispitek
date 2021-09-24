@@ -4,19 +4,16 @@ int main()
 {
     const char *vertShaderSource = "#version 330 core\n"
     "layout (location = 0) in vec3 aPos;\n"
-    "layout (location = 1) in vec3 aColor;\n"
-    "layout (location = 2) in vec2 aTexCoord;\n"
-    "out vec3 ourColor;\n"
+    "layout (location = 1) in vec2 aTexCoord;\n"
     "out vec2 TexCoord;\n"
+    "uniform mat4 transform;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(aPos, 1.0);\n"
-    "   ourColor = aColor;\n"
+    "   gl_Position = transform * vec4(aPos, 1.0f);\n"
     "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);\n"
     "}\n\0";
     const char *fragShaderSource = "#version 330 core\n"
     "out vec4 FragColor;\n"
-    "in vec3 ourColor;\n"
     "in vec2 TexCoord;\n"
     "uniform sampler2D texture1;\n"
     "uniform sampler2D texture2;\n"
@@ -27,11 +24,11 @@ int main()
 
         
     float vertices[] = {      
-        // positions          // colors           // texture coords
-     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+        // positions          // texture coords           
+     0.5f,  0.5f, 0.0f,   1.0f, 1.0f, // top right
+     0.5f, -0.5f, 0.0f,   1.0f, 0.0f, // bottom right
+     -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, // bottom left
+     -0.5f,  0.5f, 0.0f,   0.0f, 1.0f  // top left ft 
     };
     unsigned int indices[] = {
         0,1,3,
@@ -69,6 +66,7 @@ int main()
     trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
     vec = trans * vec;
     std::cout << vec.x << vec.y << vec.z << std::endl;
+
     //Vertex Shader
     unsigned int vertShader;
     vertShader = glCreateShader(GL_VERTEX_SHADER);
@@ -134,16 +132,16 @@ int main()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
     
     //position attributtes
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     
     //color 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    //glEnableVertexAttribArray(1);
     
     //texture position attributtes
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER,0);
     glBindVertexArray(0);
@@ -154,10 +152,11 @@ int main()
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
     unsigned char *imageData = stbi_load("resources/container.jpg", &width,&height,&nrChannels,0);
     if(imageData)
     {
@@ -189,7 +188,8 @@ int main()
     glUniform1i(glGetUniformLocation(shaderProgram, "texture"), 0);
     glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1); 
 
-
+    //unsigned int transformBox = glGetUniformLocation(shaderProgram,"transform");
+    //glUniformMatrix4fv(transformBox,1,GL_FALSE,glm::value_ptr(trans));
 
     while(!glfwWindowShouldClose(window))
     {
@@ -203,7 +203,16 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
         
+        //create transformations
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(0.5f,-0.5f,0.0f));
+        transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0.0f,0.0f,1.0f));
+
+
         glUseProgram(shaderProgram);
+
+        unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
+        glUniformMatrix4fv(transformLoc,1,GL_FALSE,glm::value_ptr(transform));
         glBindVertexArray(VAO);
 
  
