@@ -1,5 +1,19 @@
 #include "Renderer.h"
 #include <stb_image.h>
+        
+    glm::vec3 camCoords = glm::vec3(0.0f,0.0f,3.0f);
+    glm::vec3 camView = glm::vec3(0.0f,0.0f,0.0f);
+    glm::vec3 camDirection = glm::normalize(camCoords - camView);
+    glm::vec3 camFront = glm::vec3(0.0f,0.0f,-1.0f);
+    glm::vec3 up = glm::vec3(0.0f,1.0f,0.0f);
+    glm::vec3 camRight = glm::normalize(glm::cross(up,camDirection));
+    glm::vec3 camUP = glm::cross(camDirection,camRight);
+    bool firstMovement = true;
+
+    float yaw = -90.0f;
+    float pitch = 0.0f;
+    float lastX = 800.0f / 2.0;
+    float lastY = 600.0 /2.0;
 int main()
 {
     const char *vertShaderSource = "#version 330 core\n"
@@ -25,7 +39,7 @@ int main()
     "}\n\0";
 
    
-
+    
     float vertices[] = {      
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
          0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -95,6 +109,9 @@ int main()
 
     //create the window
     GLFWwindow* window = glfwCreateWindow(800,600, "Crispitek",NULL,NULL);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);  
+
     if(window == NULL)
     {
         std::cout << "Poopy Stinky" << std::endl;
@@ -265,13 +282,23 @@ int main()
 
         glUseProgram(shaderProgram);
 
+        
+
+
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = glm::mat4(1.0f);
+        
         glm::mat4 projection = glm::mat4(1.0f);
 
         //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));  
-
-        view = glm::translate(view, glm::vec3(0.0f,0.0f, -3.0f));
+        glm::mat4 view = glm::mat4(1.0f);
+        const float radius = 10.0f;
+        float x = sin(glfwGetTime()) * radius;
+        float z = sin(glfwGetTime()) * radius;
+        //glm::mat4 view;
+        view = glm::lookAt(camCoords,camCoords+camFront,up);
+        //setMat4
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
+        
         //glm::mat4 projection;
         projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f , 0.1f, 100.0f);
 
@@ -282,7 +309,7 @@ int main()
         glUniformMatrix4fv(viewLoc,1,GL_FALSE,&view[0][0]);
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"), 1, GL_FALSE, &projection[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"), 1, GL_FALSE, &view[0][0]);
+        //glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"), 1, GL_FALSE, &view[0][0]);
     
         
 
@@ -318,6 +345,61 @@ void framebuffer_resize(GLFWwindow* window,int width, int height)
 void processInput(GLFWwindow* window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window,true);
+    {
+       glfwSetWindowShouldClose(window,true);
+    }
+    const float camSpeed = 0.05f;
+    if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS)
+    {
+        camCoords += camSpeed * camFront;
+    }
+    if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS)
+    {
+        camCoords -= camSpeed * camFront;
+    }
+    if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS)
+    {
+        camCoords -= glm::normalize(glm::cross(camFront,up)) * camSpeed;
+    }
+    if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS)
+    {
+        camCoords += glm::normalize(glm::cross(camFront,up)) * camSpeed;
+    }
+}
+void mouse_callback(GLFWwindow* window, double xPos, double yPos)
+{
+    if(firstMovement)
+    {
+        lastX = xPos;
+        lastY = yPos;
+        firstMovement = false;
+    }
+
+    float xOffset = xPos - lastX;
+    float yOffset = lastY - yPos;
+    lastX = xPos;
+    lastY = yPos;
+
+    float sensitivity = 0.1f;
+    xOffset *= sensitivity;
+    yOffset *= sensitivity;
+
+    yaw += xOffset;
+    pitch += yOffset;
+
+    if(pitch > 89.0f)
+    {
+        pitch = 89.0f;
+    }
+    if(pitch < -89.0f)
+    {
+        pitch = -89.0f;
+    }
+
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    camFront = glm::normalize(direction);
 }
 

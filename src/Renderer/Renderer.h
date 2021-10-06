@@ -9,3 +9,4 @@
 
 void framebuffer_resize(GLFWwindow* window,int width, int height);
 void processInput(GLFWwindow *window);
+void mouse_callback(GLFWwindow* window, double xPos, double yPos);
