@@ -39,3 +39,4 @@ add_definitions(-DGLFW_INCLUDE_NONE)
 add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES} ${GLAD_DIR}/src/glad.c)
 # Link to libraries
 target_link_libraries(${PROJECT_NAME} glfw -static-libstdc++ -static-libgcc ${GLFW_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} -lassimp ${ASSIMP_LIBRARIES})
